@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+export PGDATA=$PWD/dev/postgres
+pg_ctl stop

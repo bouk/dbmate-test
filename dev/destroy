@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+dev/down
+rm -rf dev/postgres

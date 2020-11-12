@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p dev/bin
+go build -o dev/bin/ \
+  github.com/amacneil/dbmate \
+  github.com/volatiletech/sqlboiler/v4 \
+  ./cmd/dbmatesvc \
+  github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql &
+buildpid="$!"
+
+export PGDATA=$PWD/dev/postgres
+export PGDATABASE=postgres
+export PGPORT=12001
+export PGUSER=postgres
+
+if [ ! -d $PGDATA ]; then
+  echo "=> Setting up postgres" >&2
+  mkdir -p $PGDATA 
+  pg_ctl initdb -s -o "--username=$PGUSER --auth=trust --encoding=UNICODE"
+fi
+ln -sfn ../postgresql.conf $PGDATA/postgresql.conf
+
+if ! pg_ctl status &>/dev/null; then
+  echo "=> Starting postgres" >&2
+  pg_ctl -s -l $PGDATA/postgresql.log start
+fi
+
+wait $buildpid
+
+export PATH="$PWD/dev/bin:$PATH"
+export DATABASE_URL="postgres://$PGUSER@localhost:$PGPORT/$PGDATABASE?host=$PGDATA"
+if ! dbmate status --quiet; then
+  echo "=> Running migrations" >&2
+  dbmate up
+fi
+
+PSQL_DBNAME=$PGDATABASE PSQL_USER=$PGUSER PSQL_PORT=$PGPORT PSQL_HOST=$PGDATA sqlboiler -c dev/sqlboiler.toml psql
