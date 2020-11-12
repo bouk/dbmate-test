@@ -1,0 +1,9 @@
+# Set postgres-related variables
+export PGDATA=$PWD/dev/postgres
+export PGHOST=$PGDATA
+export PGDATABASE=postgres
+export PGPORT=12001
+export PGUSER=postgres
+
+# Disable CGO
+export CGO_ENABLED=0

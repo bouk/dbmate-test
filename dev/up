@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+. dev/env
+
 mkdir -p dev/bin
 go build -o dev/bin/ \
   github.com/amacneil/dbmate \
@@ -9,15 +11,10 @@ go build -o dev/bin/ \
   github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql &
 buildpid="$!"
 
-export PGDATA=$PWD/dev/postgres
-export PGDATABASE=postgres
-export PGPORT=12001
-export PGUSER=postgres
-
 if [ ! -d $PGDATA ]; then
   echo "=> Setting up postgres" >&2
   mkdir -p $PGDATA 
-  pg_ctl initdb -s -o "--username=$PGUSER --auth=trust --encoding=UNICODE"
+  pg_ctl initdb -s -o "--username=$PGUSER --auth=trust --encoding=UTF8 --no-locale"
 fi
 ln -sfn ../postgresql.conf $PGDATA/postgresql.conf
 
